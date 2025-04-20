@@ -52,6 +52,14 @@ std::pair<double, double> compute_precision_recall(
             ++it1;
         }
     }
+    while (it1 != truth_hh.end()) {
+        fn++;
+        ++it1;
+    }
+    while (it2 != sketch_hh.end()) {
+        fp++;
+        ++it2;
+    }
 
     double precision = tp + fp > 0 ? tp / (tp + fp) : 0.0;
     double recall = tp + fn > 0 ? tp / (tp + fn) : 0.0;
@@ -84,7 +92,7 @@ int main(int argc, char **argv) {
     std::unordered_map<uint64_t, uint64_t> map(N);
     CountSketch cs(5, 10000);
     CountMinSketch cms(5, 1000);
-    MisraGries mg(10);
+    MisraGries mg(50);
 
 
     // ------------- COUNTING -------------

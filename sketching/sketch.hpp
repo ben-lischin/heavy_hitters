@@ -10,8 +10,6 @@
 #include <random>
 #include "../hashutil.h"
 
-// assume no heavy hitter queries for phi < MIN_PHI
-#define MIN_PHI 0.001
 
 const uint64_t LARGE_PRIME = 0xFFFFFFFFFFFFFFC5;
 
@@ -101,7 +99,7 @@ class CountMinSketch : public Sketch {
         // counting table
         uint64_t *table;
 
-        // has coefficients {a, b}[]
+        // hash coefficients {a, b}[]
         uint64_t *hash_coeffs;
 
         // candidates for heavy hitters
@@ -109,11 +107,6 @@ class CountMinSketch : public Sketch {
 
         // hash function for assigning a counter to update in the row
         inline uint64_t BucketHash(uint64_t x, uint64_t row);
-
-
-        // // minheap for maintaining heavy hitter candidates
-        // std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> minHeap
-
 
 };
 

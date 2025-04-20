@@ -20,17 +20,7 @@ CountMinSketch::CountMinSketch(uint64_t t, uint64_t k) : m(0), t(t), k(k) {
         hash_coeffs[i * 2] = distrib_a(gen);
         hash_coeffs[i * 2 + 1] = distrib_b(gen);
     }
-
-
-
-    // // coefficients for t pairwise independent hash functions (from field Z_p, nonzero)
-    // srand(time(NULL));
-    // for (uint64_t i = 0; i < t * 2; i+=2) {
-    //     // hash_coeffs[i] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // a
-    //     // hash_coeffs[i + 1] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // b
-    //     hash_coeffs[i] = uint64_t(rand()) + 1; // 0 < a < p
-    //     hash_coeffs[i + 1] = uint64_t(rand()); // 0 ≤ b < p
-    // }
+    
 }
 
 CountMinSketch::~CountMinSketch() {
@@ -42,12 +32,10 @@ CountMinSketch::~CountMinSketch() {
 }
 
 inline uint64_t CountMinSketch::BucketHash(uint64_t x, uint64_t row) {
-    // return MurmurHash64A(&x, sizeof(x), row) % this->k;
     uint64_t a = hash_coeffs[row * 2];
     uint64_t b = hash_coeffs[row * 2 + 1];
     __uint128_t t = (__uint128_t)a * x + b;
     return (uint64_t)(t % LARGE_PRIME) % this->k;
-    // return ((a1 * x + b1) % LARGE_PRIME) % this->k;
 }
 
 void CountMinSketch::Add(uint64_t x) {
