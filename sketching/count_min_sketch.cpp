@@ -6,20 +6,52 @@
 
 CountMinSketch::CountMinSketch(uint64_t t, uint64_t k) : m(0), t(t), k(k) {
     this->table = (uint64_t*) malloc(t * k * sizeof(uint64_t));
+    this->hash_coeffs = (uint64_t*) malloc(t * 2 * sizeof(uint64_t));
+
+
+    // coefficients for t pairwise independent hash functions
+
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<uint64_t> distrib_a(1ULL, LARGE_PRIME - 1ULL); // 0 < a < p
+    std::uniform_int_distribution<uint64_t> distrib_b(0ULL, LARGE_PRIME - 1ULL); // 0 ≤ b < p
+
+    for (uint64_t i = 0; i < t; i++) {
+        hash_coeffs[i * 2] = distrib_a(gen);
+        hash_coeffs[i * 2 + 1] = distrib_b(gen);
+    }
+
+
+
+    // // coefficients for t pairwise independent hash functions (from field Z_p, nonzero)
+    // srand(time(NULL));
+    // for (uint64_t i = 0; i < t * 2; i+=2) {
+    //     // hash_coeffs[i] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // a
+    //     // hash_coeffs[i + 1] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // b
+    //     hash_coeffs[i] = uint64_t(rand()) + 1; // 0 < a < p
+    //     hash_coeffs[i + 1] = uint64_t(rand()); // 0 ≤ b < p
+    // }
 }
 
 CountMinSketch::~CountMinSketch() {
     free(this->table);
     this->table = nullptr;
+
+    free(this->hash_coeffs);
+    this->hash_coeffs = nullptr;
 }
 
 inline uint64_t CountMinSketch::BucketHash(uint64_t x, uint64_t row) {
-    return MurmurHash64A(&x, sizeof(x), row) % this->k;
+    // return MurmurHash64A(&x, sizeof(x), row) % this->k;
+    uint64_t a = hash_coeffs[row * 2];
+    uint64_t b = hash_coeffs[row * 2 + 1];
+    __uint128_t t = (__uint128_t)a * x + b;
+    return (uint64_t)(t % LARGE_PRIME) % this->k;
+    // return ((a1 * x + b1) % LARGE_PRIME) % this->k;
 }
 
 void CountMinSketch::Add(uint64_t x) {
     for (uint64_t row = 0; row < this->t; row++) {
-        // use row as hash seed // TODO: maybe store an array of salts, or hash func coeffs
         uint64_t bucket = BucketHash(x, row);
         table[row * this->k + bucket]++;
     }
@@ -54,6 +86,6 @@ std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> CountMinSketch::HeavyH
 }
 
 size_t CountMinSketch::Size() {
-    return sizeof(*this) + (t * k + 3) * sizeof(uint64_t);
+    return sizeof(*this) + (t * k + 3 + this->seen.size()) * sizeof(uint64_t);
     // + this->seen.size()
 }

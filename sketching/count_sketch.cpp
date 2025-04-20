@@ -3,21 +3,65 @@
 
 CountSketch::CountSketch(uint64_t t, uint64_t k) : m(0), t(t), k(k) {
     this->table = (int64_t*) malloc(t * k * sizeof(int64_t));
+    this->hash_coeffs = (uint64_t*) malloc(t * 4 * sizeof(uint64_t));
+
+    // coefficients for t pairwise independent hash functions
+
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<uint64_t> distrib_a(1ULL, LARGE_PRIME - 1ULL); // 0 < a < p
+    std::uniform_int_distribution<uint64_t> distrib_b(0ULL, LARGE_PRIME - 1ULL); // 0 ≤ b < p
+
+    for (uint64_t i = 0; i < t; i++) {
+        hash_coeffs[i * 4] = distrib_a(gen);
+        hash_coeffs[i * 4 + 1] = distrib_b(gen);
+        hash_coeffs[i * 4 + 2] = distrib_a(gen);
+        hash_coeffs[i * 4 + 3] = distrib_b(gen);
+    }
+
+    // // coefficients for t pairwise independent hash functions (from field Z_p, nonzero)
+    // srand(time(NULL));
+    // for (uint64_t i = 0; i < t * 4; i+=4) {
+    //     // hash_coeffs[i] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // a1
+    //     // hash_coeffs[i + 1] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // b1
+    //     // hash_coeffs[i + 2] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // a2
+    //     // hash_coeffs[i + 3] = uint64_t(float(rand())*float(LARGE_PRIME)/float(RAND_MAX) + 1); // b2
+    //     hash_coeffs[i] = uint64_t(rand()) + 1; // 0 < a1 < p
+    //     hash_coeffs[i + 1] = uint64_t(rand()); // 0 ≤ b1 < p
+    //     hash_coeffs[i + 2] = uint64_t(rand()) + 1; // 0 < a2 < p
+    //     hash_coeffs[i + 3] = uint64_t(rand()); // 0 ≤ b2 < p
+    // }
 }
 
 CountSketch::~CountSketch() {
     free(this->table);
     this->table = nullptr;
+
+    free(this->hash_coeffs);
+    this->hash_coeffs = nullptr;
 }
 
 
 inline uint64_t CountSketch::BucketHash(uint64_t x, uint64_t row) {
-    return MurmurHash64A(&x, sizeof(x), row) % this->k;
+    // return MurmurHash64A(&x, sizeof(x), row) % this->k;
+    uint64_t a1 = hash_coeffs[row * 4];
+    uint64_t b1 = hash_coeffs[row * 4 + 1];
+    __uint128_t t = (__uint128_t)a1 * x + b1;
+    return (uint64_t)(t % LARGE_PRIME) % this->k;
+    // return ((a1 * x + b1) % LARGE_PRIME) % this->k;
+
 }
 
 inline int8_t CountSketch::UpdateHash(uint64_t x, uint64_t row) {
-    uint64_t hash = MurmurHash64A(&x, sizeof(x), row + 0xBEEF);
-    return (hash & 1) ? 1 : -1;
+    // uint64_t hash = MurmurHash64A(&x, sizeof(x), row + 0xBEEF);
+    // return (hash & 1UL) ? 1 : -1;
+    uint64_t a2 = hash_coeffs[row * 4 + 2];
+    uint64_t b2 = hash_coeffs[row * 4 + 3];
+    __uint128_t t = (__uint128_t)a2 * x + b2;
+
+    uint64_t hash = (uint64_t)(t % LARGE_PRIME);
+    return (hash & 1ULL) * 2 - 1;
+    // return (hash & 1UL) ? 1 : -1;
 }
 
 void CountSketch::Add(uint64_t x) {
@@ -33,14 +77,13 @@ void CountSketch::Add(uint64_t x) {
 }
 
 uint64_t CountSketch::Estimate(uint64_t x) {
-    std::vector<int64_t> counters;
-    counters.reserve(t);
+    std::vector<int64_t> counters = std::vector<int64_t>(t);
 
     for (uint64_t row = 0; row < t; row++) {
         uint64_t bucket = BucketHash(x, row);
         int8_t sign = UpdateHash(x, row);
         int64_t count = sign * table[row * this->k + bucket];
-        counters.push_back(count);
+        counters[row] = count;
     }
 
     // median
@@ -63,6 +106,6 @@ std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> CountSketch::HeavyHitt
 }
 
 size_t CountSketch::Size() {
-    return sizeof(*this) + (t * k + 3) * sizeof(uint64_t);
+    return sizeof(*this) + (t * k + 3 + this->seen.size()) * sizeof(uint64_t);
     // + this->seen.size()
 }

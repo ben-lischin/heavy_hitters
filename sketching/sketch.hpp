@@ -5,10 +5,15 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <cstdint>
+#include <random>
 #include "../hashutil.h"
 
+// assume no heavy hitter queries for phi < MIN_PHI
+#define MIN_PHI 0.001
 
+const uint64_t LARGE_PRIME = 0xFFFFFFFFFFFFFFC5;
 
 class Sketch {
     public:
@@ -62,6 +67,9 @@ class CountSketch : public Sketch {
         // counting table
         int64_t *table;
 
+        // has coefficients {a1, b1, a2, b2}[]
+        uint64_t *hash_coeffs;
+
         // candidates for heavy hitters
         std::unordered_set<uint64_t> seen;
 
@@ -93,6 +101,9 @@ class CountMinSketch : public Sketch {
         // counting table
         uint64_t *table;
 
+        // has coefficients {a, b}[]
+        uint64_t *hash_coeffs;
+
         // candidates for heavy hitters
         std::unordered_set<uint64_t> seen;
 
@@ -100,7 +111,7 @@ class CountMinSketch : public Sketch {
         inline uint64_t BucketHash(uint64_t x, uint64_t row);
 
 
-        // // minheap for maintaining heavy hitters
+        // // minheap for maintaining heavy hitter candidates
         // std::priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>> minHeap
 
 

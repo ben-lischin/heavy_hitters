@@ -79,12 +79,15 @@ int main(int argc, char **argv) {
     std::cout << "Time to generate " << N << " items: " << elapsed(t1, t2) << " secs\n\n";
 
 
-    // ------------- COUNTING -------------
+    // ------------- DATA STRUCTURES -------------
 
     std::unordered_map<uint64_t, uint64_t> map(N);
-    CountSketch cs(2, 5);
-    CountMinSketch cms(2, 5);
-    MisraGries mg(1000);
+    CountSketch cs(5, 10000);
+    CountMinSketch cms(5, 1000);
+    MisraGries mg(10);
+
+
+    // ------------- COUNTING -------------
 
     // Hash Table          
     t1 = high_resolution_clock::now();
@@ -167,11 +170,14 @@ int main(int argc, char **argv) {
     auto mg_precision_recall = compute_precision_recall(ht_hh, mg_hh);
     std::cout << "Misra-Gries { Precision, Recall } : { " << mg_precision_recall.first << ", " << mg_precision_recall.second  << " }\n\n";
 
+
     // ------------- Memory Usage -------------
-    std::cout << "Hash Table size: " << map.size() * (sizeof(uint64_t) * 2) << " bytes\n";
-    std::cout << "Count Sketch size: " << cs.Size() << " bytes\n";
-    std::cout << "Count-Min Sketch size: " << cms.Size() << " bytes\n";
-    std::cout << "Misra-Gries size: " << mg.Size() << " bytes\n";
+
+	uint64_t ht_size = map.size() * (sizeof(uint64_t) * 2);
+    std::cout << "Hash Table size: " << ht_size << " bytes\n";
+    std::cout << "Count Sketch size: " << cs.Size() << " bytes (saved : " << ht_size - cs.Size() << " bytes)\n";
+    std::cout << "Count-Min Sketch size: " << cms.Size() << " bytes (saved : " << ht_size - cms.Size() << " bytes)\n";
+    std::cout << "Misra-Gries size: " << mg.Size() << " bytes (saved : " << ht_size - mg.Size() << " bytes)\n";
 
     return 0;
 }
