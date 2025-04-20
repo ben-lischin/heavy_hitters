@@ -30,7 +30,7 @@ std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> MisraGries::HeavyHitte
 
     std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> hh;
     for (const auto& [key, count] : this->counters) {
-        if (count > threshold) {
+        if (count >= threshold) {
             hh.insert({count, key});
         }
     }

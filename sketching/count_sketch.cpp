@@ -54,7 +54,7 @@ std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> CountSketch::HeavyHitt
     std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> hh;
     for (uint64_t x : seen) {
         uint64_t count = Estimate(x);
-        if (count > threshold) {
+        if (count >= threshold) {
             hh.insert({count, x});
         }
     }
