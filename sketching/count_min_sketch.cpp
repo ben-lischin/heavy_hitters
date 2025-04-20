@@ -25,6 +25,8 @@ void CountMinSketch::Add(uint64_t x) {
     }
 
     this->m++;
+
+    this->seen.insert(x);
 }
 
 // min of t hashed counters
@@ -37,10 +39,21 @@ uint64_t CountMinSketch::Estimate(uint64_t x) {
     return min;
 }
 
-// std::vector<uint64_t> CountMinSketch::HeavyHitters(double phi) {
-//     //
-// }
+std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> CountMinSketch::HeavyHitters(double phi) {
+    uint64_t threshold = phi * this->m;
+    
+    std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> hh;
+    for (uint64_t x : seen) {
+        uint64_t count = Estimate(x);
+        if (count > threshold) {
+            hh.insert({count, x});
+        }
+    }
 
-// size_t CountSketch::Size() {
-//     // return sizeof(*this) + t * k * sizeof(uint64_t);
-// }
+    return hh;
+}
+
+size_t CountMinSketch::Size() {
+    return sizeof(*this) + (t * k + 3) * sizeof(uint64_t);
+    // + this->seen.size()
+}

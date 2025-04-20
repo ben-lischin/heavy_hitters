@@ -4,8 +4,11 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <cstdint>
 #include "../hashutil.h"
+
+
 
 class Sketch {
     public:
@@ -13,11 +16,10 @@ class Sketch {
         virtual void Add(uint64_t x) = 0;
         // returns the estimated frequency of item x
         virtual uint64_t Estimate(uint64_t x) = 0;
-        // // calculates the phi-heavy hitters
-        // // returns a set of items where the count of each item in the set is bigger than phi*N, where N is the size of the stream
-        // virtual std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) = 0;
-        // // return the size of the sketch (allocated memory)
-        // virtual size_t Size() = 0;
+        // calculates the phi-heavy hitters with frequency > phi*N
+        virtual std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) = 0;
+        // return the size of the sketch (allocated memory)
+        virtual size_t Size() = 0;
     private:
         // total count of items seen
         uint64_t m;
@@ -28,10 +30,8 @@ class MisraGries : public Sketch {
         MisraGries(uint64_t capacity);
         void Add(uint64_t x) override;
         uint64_t Estimate(uint64_t x) override;
-        std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi);
-        // std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
-        size_t Size();
-        // size_t Size() override;
+        std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
+        size_t Size() override;
     private:
         // total count of items seen
         uint64_t m;
@@ -50,8 +50,8 @@ class CountSketch : public Sketch {
         ~CountSketch();
         void Add(uint64_t x) override;
         uint64_t Estimate(uint64_t x) override;
-        // std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
-        // size_t Size() override;
+        std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
+        size_t Size() override;
     private:
         // total count of items seen
         uint64_t m;
@@ -61,6 +61,9 @@ class CountSketch : public Sketch {
         uint64_t k;
         // counting table
         int64_t *table;
+
+        // candidates for heavy hitters
+        std::unordered_set<uint64_t> seen;
 
         // first hash function for assigning a counter to update in the row
         inline uint64_t BucketHash(uint64_t x, uint64_t row);
@@ -78,8 +81,8 @@ class CountMinSketch : public Sketch {
         ~CountMinSketch();
         void Add(uint64_t x) override;
         uint64_t Estimate(uint64_t x) override;
-        // std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
-        // size_t Size() override;
+        std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
+        size_t Size() override;
     private:
         // total count of items seen
         uint64_t m;
@@ -89,6 +92,9 @@ class CountMinSketch : public Sketch {
         uint64_t k;
         // counting table
         uint64_t *table;
+
+        // candidates for heavy hitters
+        std::unordered_set<uint64_t> seen;
 
         // hash function for assigning a counter to update in the row
         inline uint64_t BucketHash(uint64_t x, uint64_t row);

@@ -28,6 +28,8 @@ void CountSketch::Add(uint64_t x) {
     }
 
     this->m++;
+
+    this->seen.insert(x);
 }
 
 uint64_t CountSketch::Estimate(uint64_t x) {
@@ -46,10 +48,21 @@ uint64_t CountSketch::Estimate(uint64_t x) {
     return std::max(counters[t / 2], int64_t(0)); // no negative counts
 }
 
-// std::vector<uint64_t> CountSketch::HeavyHitters(double phi) {
-//     //
-// }
+std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> CountSketch::HeavyHitters(double phi) {
+    uint64_t threshold = phi * this->m;
+    
+    std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> hh;
+    for (uint64_t x : seen) {
+        uint64_t count = Estimate(x);
+        if (count > threshold) {
+            hh.insert({count, x});
+        }
+    }
 
-// size_t CountSketch::Size() {
-//     //
-// }
+    return hh;
+}
+
+size_t CountSketch::Size() {
+    return sizeof(*this) + (t * k + 3) * sizeof(uint64_t);
+    // + this->seen.size()
+}
