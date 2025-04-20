@@ -65,7 +65,7 @@ class CountSketch : public Sketch {
         // counting table
         int64_t *table;
 
-        // has coefficients {a1, b1, a2, b2}[]
+        // hash coefficients {a1, b1, a2, b2}[]
         uint64_t *hash_coeffs;
 
         // candidates for heavy hitters
@@ -82,7 +82,6 @@ class CountSketch : public Sketch {
 class CountMinSketch : public Sketch {
     public:
         // t = num hash functions, k = num counters (buckets per row)
-        // for calculating heavy hitters, we should use an expected stream size N and phi for allocating a minheap
         CountMinSketch(uint64_t t, uint64_t k);
         ~CountMinSketch();
         void Add(uint64_t x) override;
