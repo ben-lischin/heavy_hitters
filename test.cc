@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "zipf.h"
+#include "sketching/sketch.hpp"
 
 using namespace std::chrono;
 
