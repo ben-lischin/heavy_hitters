@@ -5,7 +5,7 @@ OPT= -g -flto -Ofast
 CFLAGS = $(OPT) -Wall
 LIBS = -lssl -lcrypto 
 
-test: test.cc zipf.c hashutil.c
+test: test.cc zipf.c hashutil.c sketching/count_sketch.cpp sketching/count_min_sketch.cpp sketching/misra_gries.cpp
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 clean:
