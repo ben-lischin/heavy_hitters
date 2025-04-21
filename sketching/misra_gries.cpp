@@ -1,6 +1,8 @@
 #include "sketch.hpp"
 
-MisraGries::MisraGries(uint64_t k) : k(k) {}
+MisraGries::MisraGries(uint64_t k) : m(0), k(k) {
+    counters.reserve(k);
+}
 
 void MisraGries::Add(uint64_t x) {
     if (this->counters.count(x)) {
@@ -21,8 +23,8 @@ void MisraGries::Add(uint64_t x) {
 }
 
 uint64_t MisraGries::Estimate(uint64_t x) {
-    auto it = counters.find(x);
-    return it != counters.end() ? it->second : 0;
+    auto it = this->counters.find(x);
+    return it != this->counters.end() ? it->second : 0;
 }
 
 std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> MisraGries::HeavyHitters(double phi) {
@@ -39,5 +41,5 @@ std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> MisraGries::HeavyHitte
 }
 
 size_t MisraGries::Size() {
-    return sizeof(*this) + this->counters.size() * (sizeof(uint64_t) * 2);
+    return sizeof(*this) + (2 + (this->counters.size() * 2)) * sizeof(uint64_t);
 }

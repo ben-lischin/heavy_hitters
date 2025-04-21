@@ -8,10 +8,15 @@
 #include <set>
 #include <cstdint>
 #include <random>
+#include <cassert>
 #include "../hashutil.h"
 
+// assume no heavy hitter queries for phi < 0.0001
+const double MIN_PHI 0.0001;
 
-const uint64_t LARGE_PRIME = 0xFFFFFFFFFFFFFFC5;
+// 2^89 - 1 (mersenne prime)
+const __uint128_t LARGE_PRIME = 0x1FFFFFFFFFFFFFFF;
+
 
 class Sketch {
     public:
@@ -19,12 +24,12 @@ class Sketch {
         virtual void Add(uint64_t x) = 0;
         // returns the estimated frequency of item x
         virtual uint64_t Estimate(uint64_t x) = 0;
-        // calculates the phi-heavy hitters with frequency > phi*N
+        // calculates the phi-heavy hitters with frequency ≥ phi*N
         virtual std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) = 0;
         // return the size of the sketch (allocated memory)
         virtual size_t Size() = 0;
     private:
-        // total count of items seen
+        // stream size so far
         uint64_t m;
 };
 
@@ -36,14 +41,12 @@ class MisraGries : public Sketch {
         std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
         size_t Size() override;
     private:
-        // total count of items seen
+        // stream size so far
         uint64_t m;
         // capacity
         uint64_t k;
-        // key : count for up to top k items
+        // { key : count } for up to k counters
         std::unordered_map<uint64_t, uint64_t> counters;
-
-        
 };
 
 class CountSketch : public Sketch {
@@ -56,7 +59,7 @@ class CountSketch : public Sketch {
         std::multimap<uint64_t, uint64_t, std::greater<uint64_t>> HeavyHitters(double phi) override;
         size_t Size() override;
     private:
-        // total count of items seen
+        // stream size so far
         uint64_t m;
         // rows ~ num hash funcs
         uint64_t t;
@@ -75,8 +78,6 @@ class CountSketch : public Sketch {
         inline uint64_t BucketHash(uint64_t x, uint64_t row);
         // second hash function for incrementing or decrementing the counter
         inline int8_t UpdateHash(uint64_t x, uint64_t row);
-
-        
 };
 
 class CountMinSketch : public Sketch {
@@ -106,7 +107,6 @@ class CountMinSketch : public Sketch {
 
         // hash function for assigning a counter to update in the row
         inline uint64_t BucketHash(uint64_t x, uint64_t row);
-
 };
 
 #endif
