@@ -90,9 +90,9 @@ int main(int argc, char **argv) {
     // ------------- DATA STRUCTURES -------------
 
     std::unordered_map<uint64_t, uint64_t> map(N);
-    CountSketch cs(5, 8192);
-    CountMinSketch cms(5, 1024);
-    MisraGries mg(3500);
+    CountSketch cs(8, 2048);
+    CountMinSketch cms(8, 1024);
+    MisraGries mg(3000);
 
 
     // ------------- COUNTING -------------
