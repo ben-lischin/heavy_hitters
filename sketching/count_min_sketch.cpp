@@ -45,15 +45,16 @@ inline uint64_t CountMinSketch::BucketHash(uint64_t x, uint64_t row) {
 
     // optimization...
 
-    // low order bits: u % 2^89
-    __uint128_t lo = u & LARGE_PRIME; 
     // high order bits: u / 2^89
     __uint128_t hi = u >> 89;
+    // low order bits: u % 2^89
+    __uint128_t lo = u & LARGE_PRIME; 
+
    
     // hi + lo < LARGE_PRIME, and (hi + lo) ≡ u (mod LARGE_PRIME)
     __uint128_t hash = hi + lo;
 
-    // map hash to a counter bucket
+    // map hash to a counter bucket [0, k)
     hash = hash & (this->k - 1); // hash % k, assuming k is a power of 2
 
     return (uint64_t)hash;

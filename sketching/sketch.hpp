@@ -11,8 +11,8 @@
 #include <cassert>
 #include "../hashutil.h"
 
-// assume no heavy hitter queries for phi < 0.0001
-const double MIN_PHI 0.0001;
+// assume no heavy hitter queries for phi < MIN_PHI
+const double MIN_PHI = 0.001;
 
 // 2^89 - 1 (mersenne prime)
 const __uint128_t LARGE_PRIME = 0x1FFFFFFFFFFFFFFF;
